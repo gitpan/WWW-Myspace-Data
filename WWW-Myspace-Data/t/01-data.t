@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More tests => 15;
+use Test::More tests => 28;
 
 use lib 't';
 require_ok( 'WWW::Myspace' );
@@ -14,8 +14,18 @@ my $data = WWW::Myspace::Data->new();
  
 isa_ok($data, 'WWW::Myspace::Data');
 can_ok( $data, 'approve_friend_requests');
+can_ok( $data, 'is_band');
+can_ok( $data, 'is_band_from_cache');
+can_ok( $data, 'is_cached' );
+can_ok( $data, 'is_invalid');
+can_ok( $data, 'is_private');
+can_ok( $data, 'loader' );
 can_ok( $data, 'post_comment');
 can_ok( $data, 'send_message');
+can_ok( $data, 'set_account' );
+can_ok( $data, 'track_friend' );
+can_ok( $data, 'update_all_friends' );
+can_ok( $data, 'update_friend' );
 
 my $dt1 = $data->_fresh_after({ hours => 1});
 isa_ok($dt1, 'DateTime');
@@ -26,7 +36,7 @@ cmp_ok($data->_is_fresh( $dt1, $dt2 ), '==', 1, 'data is fresh');
 cmp_ok($data->_is_fresh( $dt2, $dt1 ), '==', -1, 'data is not fresh');
 
 SKIP: {
-      skip 'no config file for testing', 6 unless -e 't/friend_adder.cfg';
+    skip 'no config file for testing', 9 unless -e 't/friend_adder.cfg';
 
     my %params = (
         config_file => 't/friend_adder.cfg',
@@ -49,12 +59,16 @@ SKIP: {
     
     ok( $data->cache_friend( $friend_id ), 'friend cached');
     my $tracking = $data->track_friend( $friend_id );
-    ok( $tracking->profile_views, 'got profile views');
+    ok( $tracking->profile_views, 'got ' . $tracking->profile_views . ' profile views ');
     
-    $friend_id = $myspace->friend_id('greatbigseaofficial');
-    ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page");
+    $friend_id = $myspace->friend_id('vilerichard');
+    ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page: $friend_id");
     
     $tracking = $data->track_friend( page => $myspace->current_page );
     ok( $tracking->profile_views, 'got profile views from page');
+    
+    ok ( $data->is_band( $friend_id), "this is a band profile");
+    ok ( !$data->is_private( $friend_id), "this is account is not set to private");
+    ok ( !$data->is_private( $friend_id), "this is not an invalid account");
 
 }

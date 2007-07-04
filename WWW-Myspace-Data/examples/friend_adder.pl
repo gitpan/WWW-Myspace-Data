@@ -28,9 +28,6 @@ $myspace->mech_params({
     agent => 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.1) Gecko/20060601 Firefox/2.0.0.1 (Ubuntu-edgy)',
 });
 
-# set the mech agent
-$myspace->_new_mech;
-
 # now let's try to log in
 $myspace->site_login;
 

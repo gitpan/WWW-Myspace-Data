@@ -25,3 +25,10 @@ CREATE TABLE `accept_log` (
   `last_accept` datetime default NULL,
   PRIMARY KEY  (`accept_id`)
 );
+
+/*
+The following change is as of Data.pm version 0.12
+*/
+
+ALTER TABLE `friends` ADD `is_invalid` CHAR( 1 ) NULL DEFAULT NULL AFTER `is_band` ,
+ADD `is_private` CHAR( 1 ) NULL DEFAULT NULL AFTER `is_invalid` ;

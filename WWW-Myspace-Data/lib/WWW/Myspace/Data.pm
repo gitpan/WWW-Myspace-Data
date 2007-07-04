@@ -19,16 +19,16 @@ WWW::Myspace::Data - WWW::Myspace database interaction
 
 =head1 VERSION
 
-Version 0.11
+Version 0.12
 
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 my $DEBUG = 0;
 
 =head1 SYNOPSIS
 
-This module is the database interface for the WWW::Myspace modules.  It
+This module is the database interface for the l<WWW::Myspace> modules.  It
 imports methods into the caller's namespace which allow the caller to
 bypass the loader object by calling the methods directly.  This module
 is intended to be used as a back end for the Myspace modules, but it can
@@ -61,9 +61,9 @@ access.
 =head2 new()
 
 new() creates a WWW::Myspace::Data object, based on parameters which are
-passed to it.  You can (optionally) pass a valid WWW::Myspace object to
+passed to it.  You can (optionally) pass a valid L<WWW::Myspace> object to
 new as the first argument.  If you just want database access, there is
-no need to pass the myspace object.  However, most update methods
+no need to pass the $myspace object.  However, most update methods
 require a valid login, so it's not a bad idea to pass it if you don't
 mind the login overhead.
 
@@ -172,7 +172,7 @@ const default_options => \%default_params;
 =head2 loader( )
 
 Before you do anything, call the loader() method.  This returns the
-Class::DBI::Loader object.  Handy if you want to access the database
+L<Class::DBI::Loader> object.  Handy if you want to access the database
 directly.  If a loader object does not already exist, loader() will try
 to create one.
 
@@ -204,7 +204,7 @@ be updated to the password supplied to the method.
 
 In order to use this module, you'll have to call this function at least
 once.  Once your account has been added to the database, there's no need
-to call set_account again, provided you always use the same Myspace
+to call set_account() again, provided you always use the same Myspace
 account and you don't change your password information.
 
 This mutator will also allow you to switch accounts within the same
@@ -287,7 +287,7 @@ sub get_account {
 
 =head2 cache_friend( $friend_id )
 
-Add this friend id to the friends table.  cache_friend will not create a
+Add this friend id to the friends table.  cache_friend() will not create a
 relationship between the friend_id and any account. It just logs the
 friend information in order to speed up various other operations.  It's
 basically an internal method, but you could use it to cache information
@@ -358,8 +358,6 @@ sub cache_friend {
         # personal profile
         if ( $size == 9 ) {
 
-            $profile{'is_band'} = 'N';
-
             if ( $content =~ />"(.*?)"</ms ) {
                 $profile{'tagline'} = $1;
             }
@@ -377,8 +375,6 @@ sub cache_friend {
 
         # band profile
         elsif ( $size == 11 ) {
-
-            $profile{'is_band'} = 'Y';
 
             if ( $content =~ m/Member Since.*?(\d\d\/\d\d\/\d\d\d\d)/ ) {
                 $profile{'member_since'} = $self->_regex_date($1);
@@ -421,6 +417,29 @@ sub cache_friend {
     }
 
     $self->{'last_lookup_id'} = $friend_id;
+    
+    my @is_cols = ( 'is_band', 'is_private', 'is_invalid' );
+    
+    foreach my $col ( @is_cols ) {
+        
+        my $test = undef;
+        if ( $col eq 'is_band' ) {
+            $test = $myspace->is_band( $friend_id );
+        }
+        else {
+            $test = $myspace->$col(page => $page );
+        }
+        
+        if ( $test ) {
+            $friend->$col( 'Y' );
+        }
+        elsif ( $test == 0 ) {
+            $friend->$col( 'N' );
+        }
+        else {
+            $friend->$col( undef );
+        }
+    }            
 
     $friend->last_update( $self->date_stamp );
     return $friend->update;
@@ -431,7 +450,7 @@ sub cache_friend {
 
 Please note that this function requires an additional database table 
 ("tracking") that has been added to the mysql.txt as of version 0.07.  The method 
-returns a Class::DBI object representing the row which has just been inserted.
+returns a L<Class::DBI> object representing the row which has just been inserted.
 
  EXAMPLE
  
@@ -488,15 +507,15 @@ sub track_friend {
 The "friends" table in your local database stores information about
 myspace friends, shared among all accounts using your database. This
 lets you store additional information about them, such as their first
-name, and is also used by WWW::Myspace methods and modules to track
+name, and is also used by L<WWW::Myspace> methods and modules to track
 information related to friends.
 
 Basically this method calls cache_friend() and then creates a friend to
 account relationship.
 
-update_friend takes a single friend id and makes sure it is represented
+update_friend() takes a single friend id and makes sure it is represented
 in the local "friends" table.  Returns 1 if the entry was successfully
-updated.  (Returns Class::DBI return value for the update).
+updated.  (Returns L<Class::DBI> return value for the update).
 
     my $data = new WWW::Myspace::Data( \%config );
     
@@ -505,7 +524,7 @@ updated.  (Returns Class::DBI return value for the update).
 Optional Parameters
 
 Optionally, using a hash reference as your second parameter, you may supply 
-update_friend with "freshness" parameters, to ensure that updates are only 
+update_friend() with "freshness" parameters, to ensure that updates are only 
 performed on friend ids which have not been updated since some arbitrary time.  
 You would define expired data in the following way:
 
@@ -580,9 +599,9 @@ sub update_friend {
 
 =head2 update_all_friends( )
 
-update_all_friends is really just a wrapper around update_friend  This
+update_all_friends() is really just a wrapper around update_friend().  This
 method fetches a complete list of your friends currently listed at
-Myspace and makes sure that all myspace users that are friends of your
+Myspace and makes sure that all Myspace users that are friends of your
 account are represented in the local "friends" table.  It does not
 delete friends which may have been removed from your Myspace account
 since your last update.
@@ -610,7 +629,7 @@ sub update_all_friends {
 
 =head2 date_stamp( )
 
-A wrapper around DateTime which provides a date stamp to be used when
+A wrapper around L<DateTime> which provides a date stamp to be used when
 entries are updated.  This is essentially an internal routine.  When
 called internally the time zone is supplied from the value passed to
 new().
@@ -635,8 +654,8 @@ current system time
 
 =item * C<< format => 'dt' >>
 
-This option will cause the method to return the actual DateTime object
-rather than a string.  Can be handy if you just need a DateTime object and
+This option will cause the method to return the actual L<DateTime> object
+rather than a string.  Can be handy if you just need a L<DateTime> object and
 want it initialized with the proper time zone.
 
 =back
@@ -672,11 +691,11 @@ sub date_stamp {
 
 }
 
-=head2 is_band( )
+=head2 is_band( $friend_id )
 
-Calls is_band_from_cache to see if the friend id is a band profile.  If
+Calls is_band_from_cache() to see if the friend id is a band profile.  If
 it returns undef, the function will look up the info using Myspace.pm's
-is_band function, cache the info and return the result.
+is_band() function, cache the info and return the result.
 
 =cut
 
@@ -698,7 +717,7 @@ sub is_band {
 
 }
 
-=head2 is_band_from_cache( )
+=head2 is_band_from_cache( $friend_id )
 
 Checks the database to see if the friend id is a band profile. Returns
 undef if the id could not be found or band info is not cached for this
@@ -717,7 +736,7 @@ sub is_band_from_cache {
         if ( !$friend->is_band ) {
 
             # if it's a NULL value, a proper lookup is needed
-            return undef;
+            return;
         }
         elsif ( $friend->is_band eq 'Y' ) {
             return 1;
@@ -727,22 +746,87 @@ sub is_band_from_cache {
         }
 
     }
-    else {
-        return undef;
+
+    return;
+
+}
+
+=head2 is_invalid( $friend_id )
+
+Checks the database to see if the friend id is a valid (ie active) id.  
+Returns 1 if true, 0 if false and undef if no data is on file.
+
+=cut
+
+sub is_invalid {
+
+    my $friend_id = shift;
+
+    my $friend = $self->{'Friends'}->retrieve( friend_id => $friend_id, );
+
+    if ($friend) {
+
+        if ( !$friend->is_invalid ) {
+
+            # if it's a NULL value, a proper lookup is needed
+            return;
+        }
+        elsif ( $friend->is_invalid eq 'Y' ) {
+            return 1;
+        }
+        elsif ( $friend->is_invalid eq 'N' ) {
+            return 0;
+        }
+
     }
+
+    return;
+
+}
+
+=head2 is_private( $friend_id )
+
+Checks the database to see if the friend id is set to "private".
+Returns 1 if true, 0 if false and undef if no data is on file.
+
+=cut
+
+sub is_private {
+
+    my $friend_id = shift;
+
+    my $friend = $self->{'Friends'}->retrieve( friend_id => $friend_id, );
+
+    if ($friend) {
+
+        if ( !$friend->is_private ) {
+
+            # if it's a NULL value, a proper lookup is needed
+            return;
+        }
+        elsif ( $friend->is_private eq 'Y' ) {
+            return 1;
+        }
+        elsif ( $friend->is_private eq 'N' ) {
+            return 0;
+        }
+
+    }
+
+    return;
 
 }
 
 =head2 friends_from_profile( { friend_id => $friend_id } )
 
-This is "sort of" a wrapper around WWW::Myspace->friends_from_profile
+This is "sort of" a wrapper around WWW::Myspace->friends_from_profile()
 The method will first check the database to see if there are any friends
 listed for $friend_id.  If friends exist, they will be returned.
-Otherwise, the method will call WWW::Myspace->friends_from_profile.  It
+Otherwise, the method will call WWW::Myspace->friends_from_profile().  It
 will cache the results, perform a database lookup and then return the
 results to the caller.  Aside from speeding up lookups, this allows you
 to do some fancier limiting and sorting when requesting data.  This
-method doesn't take all of the arguments that the Myspace module takes,
+method doesn't accept all of the arguments that the L<WWW::Myspace> takes,
 so please read the docs carefully.
 
 Required Parameters
@@ -921,9 +1005,9 @@ sub friends_from_profile {
 
 =head2 approve_friend_requests
 
-A wrapper around Myspace::approve_friend_requests.  Calls this method and
-then logs the friend requests which have been accepted.  Returns the list of
-friend_ids which have been approved.
+A wrapper around WWW::Myspace->approve_friend_requests().  Calls this method 
+and then logs the friend requests which have been accepted.  Returns the list 
+of friend_ids which have been approved.
 
 =cut
 
@@ -950,9 +1034,9 @@ sub approve_friend_requests {
 
 =head2 post_comment
 
-A wrapper around Myspace::post_comment.  Calls this method and
+A wrapper around WWW::Myspace->post_comment().  Calls this method and
 then logs the comment details.  Returns the return value of 
-Myspace::post_comment
+WWW::Myspace->post_comment().
 
 =cut
 
@@ -977,9 +1061,9 @@ sub post_comment {
 
 =head2 send_message( %options )
 
-A wrapper around Myspace::send_message.  Calls this method and
+A wrapper around WWW::Myspace->send_message().  Calls this method and
 then logs the message details.  Returns the return value of 
-Myspace::send_message  This method accepts the %options hash -- not the 
+WWW::Myspace->send_message()  This method accepts the %options hash -- not the 
 positional parameters.
 
 =cut
@@ -1006,10 +1090,10 @@ sub send_message {
 
 =head2 get_last_lookup_id ( )
 
-Returns the friend id of the last id for which a Myspace.pm 
-lookup was performed.  This is used by FriendAdder.pm to determine
-whether to sleep after skipping a profile.  If the lookup did not extend
-beyond the database, there's no reason to sleep.  May be useful for
+Returns the friend id of the last id for which a L<WWW::Myspace.pm>
+lookup was performed.  This is used by L<WWW::Myspace::FriendAdder> to 
+determine whether to sleep after skipping a profile.  If the lookup did not 
+extend beyond the database, there's no reason to sleep.  May be useful for
 troubleshooting as well.
 
 =cut
@@ -1043,7 +1127,7 @@ sub is_cached {
 
 =head2 _loader( )
 
-This is a private method, which creates a Class::DBI::Loader object,
+This is a private method, which creates a L<Class::DBI::Loader> object,
 based on configuration parameters passed to new()  To access the loader
 object directly, use loader()
 
@@ -1069,10 +1153,6 @@ sub _loader {
         options            => { AutoCommit => 1 },
         inflect            => { child => 'children' },
         additional_classes => qw/Class::DBI::AbstractSearch/,
-
-        #additional_base_classes => qw/My::Stuff/, # or arrayref
-        #left_base_classes       => qw/Class::DBI::Sweet/, #
-        #constraint              => '^foo.*',
     );
 
     $self->{'loader'} = $loader;
@@ -1095,8 +1175,8 @@ sub _loader {
 
 =head2 _die_pretty( )
 
-Internal method that deletes the Myspace object from $self and then
-prints $self via Data::Dumper.  The Myspace object is so big, that when
+Internal method that deletes the $myspace object from $self and then
+prints $self via L<Data::Dumper>.  The $myspace object is so big, that when
 you get it out of the way it can be easier to debug set parameters.
 
     $adder->_die_pretty;
@@ -1196,8 +1276,8 @@ sub _friends_from_profile {
 
 =head2 _fresh_after ( { days => $value } )
 
-Internal method.  Returns a DateTime object for time/data comparisons. 
-See update_friend for arguments that _fresh_after takes.
+Internal method.  Returns a L<DateTime> object for time/data comparisons. 
+See update_friend() for arguments that _fresh_after() takes.
 
 =cut 
 
@@ -1288,8 +1368,8 @@ sub _regex_date {
 =head1 DATABASE SCHEMA
 
 You'll find the database schema in a file called mysql.txt in the top
-directory after untarring WWW::Myspace.  This is a dump of the MySQL db
-from phpMyAdmin.  It can easily be altered for other database formats
+directory after untarring L<WWW::Myspace::Data>.  This is a dump of the MySQL 
+db from phpMyAdmin.  It can easily be altered for other database formats
 (like SQLite).  You can import the schema directly from the command
 line:
 
@@ -1347,8 +1427,8 @@ The following L<Class::DBI> issue has been reported:
 
 =over 4
 
-I had to manually downgrade DBD::SQLite from version 1.13
-to 1.12 in order to make Class::DBI work (would otherwise return:
+I had to manually downgrade L<DBD::SQLite> from version 1.13
+to 1.12 in order to make L<Class::DBI> work (would otherwise return:
 "DBD::SQLite::st fetchrow_array warning"). For more details on this see
 L<http://lists.digitalcraftsmen.net/pipermail/classdbi/2007-January/001480.html>
 
@@ -1370,7 +1450,7 @@ included in the distribution.  Please keep this in mind when upgrading.
 =head1 TO DO
 
 This module provides a wrapper around many, but by no means all of the 
-WWW::Myspace functions.  I've written it to suit my own needs.  If it does not
+L<WWW::Myspace> functions.  I've written it to suit my own needs.  If it does not
 suit all of yours, patches are very welcome.
 
 These scripts have been tested on Mac and Ubuntu platforms, running MySQL.  I
