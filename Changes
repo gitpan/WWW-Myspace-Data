@@ -1,0 +1,25 @@
+Revision history for WWW-Myspace-Data
+
+0.13    2007-07-17
+        cache_friend now requires friend_id as its sole argument
+        cache_friend now caches is_invalid when it is true.  
+        Previously it had only cached when is_invalid is false.
+        track_friend now prints a warning and returns 0 if:
+            a profile is_invalid
+            no friend_id can be found on the page
+        (since myspace is so unreliable, it was problematic
+        to die on a missing friend_id)
+        cache_friend now uses $page->decoded_content
+        cache_friend now gets friend_url and friend_user_name
+        from WWW::Myspace methods rather than by applying its
+        own regexes.
+
+0.12    2007-07-03
+        Added 2 new cols (is_invalid, is_private) to "friends" table
+        Added 2 new methods: is_invalid, is_private
+
+0.11    2007-06-29
+        Module split from WWW::Myspace distribution
+        Added examples/friend_adder.pl to  with accompanying 
+        examples/adder.cfg file
+        Updated tests so that Myspace login is not required

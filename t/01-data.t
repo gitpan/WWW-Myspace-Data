@@ -47,13 +47,16 @@ SKIP: {
     my $conf = new Config::General("$params{'config_file'}");
     my %config = $conf->getall;
     
-    my $myspace = WWW::Myspace->new( auto_login => 0 );
+    my $myspace = WWW::Myspace->new( auto_login => 0, human => $config{'human'} || 1 );
     
     my $data = WWW::Myspace::Data->new($myspace, { db => $config{'db'} } );
     my $loader = $data->loader;
     
+    #my $friend_id = $myspace->friend_id('vilerichard');
+    #ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page: $friend_id");
+
     my $friend_url = 'montgomerygentry';
-    my $friend_id = $myspace->friend_id( $friend_url ) || die;
+    my $friend_id = $myspace->friend_id( $friend_url ) || die $myspace->error;
     
     ok( $friend_id, "got friend_id");
     
@@ -61,8 +64,8 @@ SKIP: {
     my $tracking = $data->track_friend( $friend_id );
     ok( $tracking->profile_views, 'got ' . $tracking->profile_views . ' profile views ');
     
-    $friend_id = $myspace->friend_id('vilerichard');
-    ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page: $friend_id");
+    #$friend_id = $myspace->friend_id('vilerichard');
+    #ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page: $friend_id");
     
     $tracking = $data->track_friend( page => $myspace->current_page );
     ok( $tracking->profile_views, 'got profile views from page');
@@ -70,5 +73,9 @@ SKIP: {
     ok ( $data->is_band( $friend_id), "this is a band profile");
     ok ( !$data->is_private( $friend_id), "this is account is not set to private");
     ok ( !$data->is_private( $friend_id), "this is not an invalid account");
+
+    my $invalid_id = 18264230;
+    $data->cache_friend( $invalid_id );
+    ok ( $data->is_invalid( $invalid_id ), "this is not a valid account");
 
 }

@@ -19,16 +19,16 @@ WWW::Myspace::Data - WWW::Myspace database interaction
 
 =head1 VERSION
 
-Version 0.12
+Version 0.13
 
 =cut
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 my $DEBUG = 0;
 
 =head1 SYNOPSIS
 
-This module is the database interface for the l<WWW::Myspace> modules.  It
+This module is the database interface for the L<WWW::Myspace> modules.  It
 imports methods into the caller's namespace which allow the caller to
 bypass the loader object by calling the methods directly.  This module
 is intended to be used as a back end for the Myspace modules, but it can
@@ -300,49 +300,47 @@ can call this method.
 sub cache_friend {
 
     croak "no db connection" unless ( $self->loader );
-    my $page = $self->{'myspace'}->_validate_page_request( @_ );
+    my $friend_id = shift @_; 
+    my $myspace   = $self->{'myspace'};
+
+    my $page = $myspace->_validate_page_request( 
+        friend_id   => $friend_id, 
+    );
 
     # page fetches are not always succesful.  opting to return here so that
     # friend adding doesn't die on a large list. that's annoying...
     if ( !$page ) {
-        warn "could not cache friend - no defined response object provided";
+        
+        if ( $myspace->_apply_regex( regex => 'is_invalid' ) ) {
+
+            my $friend = $self->_find_or_create_friend( $friend_id );
+            $friend->is_invalid( 'Y' );
+            $friend->update();
+
+            warn "this friend id is invalid";   
+        } 
+        else {
+            warn "could not cache friend - no defined response object provided";
+        }
         return;
     }
 
-    my $myspace   = $self->{'myspace'};
-    my $friend_id = $myspace->_apply_regex(
-        regex => 'friend_id',
-        page  => $page,
-    );
-    
     croak 'friend_id required' unless $friend_id;
 
     # manage profile in "friends" table
     my $friend = $self->_find_or_create_friend($friend_id);
     
-    my $content = $page->content;
+    my $content = $page->decoded_content;
 
     my %profile = ();
 
     # first, do some generic tests
 
     # myspace URL
-    if ( $content =~
-        /\<title\>[\s]*www.myspace\.com\/([\S]*)[\s]*\<\/title\>/ )
-    {
-        $profile{'url'} = $1;
-    }
+    $profile{'url'} = $myspace->friend_url();
 
     # myspace username
-    if ( $content =~
-/index\.cfm\?fuseaction=user\&circuitaction\=viewProfile_commentForm\&friendID\=[0-9]+\&name\=([^\&]+)\&/
-      )
-    {
-        my $line = $1;
-        $line =~ s/\+/ /g;
-        $line =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $profile{'user_name'} = $line;
-    }
+    $profile{'user_name'} = $myspace->friend_user_name();
 
     if ( $content =~
 /ctl00_Main_ctl00_UserBasicInformation1_hlDefaultImage(.*?Last Login.*?)<br>/ms
@@ -396,7 +394,7 @@ sub cache_friend {
 
         }
 
-        $profile{'last_login'} = $self->{'myspace'}->last_login_ymd(
+        $profile{'last_login'} = $myspace->last_login_ymd(
             page => $page,
         );
         
@@ -449,8 +447,9 @@ sub cache_friend {
 =head2 track_friend
 
 Please note that this function requires an additional database table 
-("tracking") that has been added to the mysql.txt as of version 0.07.  The method 
-returns a L<Class::DBI> object representing the row which has just been inserted.
+("tracking") that has been added to the mysql.txt as of version 0.07.  
+The method returns a L<Class::DBI> object representing the row which has just 
+been inserted.
 
  EXAMPLE
  
@@ -472,15 +471,20 @@ returns a L<Class::DBI> object representing the row which has just been inserted
 sub track_friend {
 
     croak "no db connection" unless ( $self->loader );
-    my $page = $self->{'myspace'}->_validate_page_request( @_ );
+    my $myspace = $self->{'myspace'};
+    my $page    = $myspace->_validate_page_request( @_ );
 
-    my $myspace   = $self->{'myspace'};
-    my $friend_id = $myspace->_apply_regex(
-        regex => 'friend_id',
-        page  => $page,
-    );
+    if ( $myspace->_apply_regex( regex => 'is_invalid' ) ) {
+        warn "this account is not valid\n";
+        return 0;
+    }
+
+    my $friend_id = $myspace->friend_id;
     
-    croak 'friend_id required' unless $friend_id;
+    if ( !$friend_id ) {
+        warn 'friend_id required in track_friend' unless $friend_id;
+        return 0;
+    }
 
     my $account =
       $self->{'Accounts'}->find_or_create( my_friend_id => $friend_id, );
