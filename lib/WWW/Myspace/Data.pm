@@ -19,11 +19,11 @@ WWW::Myspace::Data - WWW::Myspace database interaction
 
 =head1 VERSION
 
-Version 0.13
+Version 0.14
 
 =cut
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 my $DEBUG = 0;
 
 =head1 SYNOPSIS
@@ -271,14 +271,24 @@ sub get_account {
           $self->{'Accounts'}
           ->retrieve( my_friend_id => $myspace->my_friend_id, );
 
-        # tweak this later to create an account automatically
-        # rather than croaking
-        unless ($account) {
-            croak
-"this account does not exist.  call set_account to create it.\n";
+        # Try to create the account if we couldn't find it.
+        if ($account) {
+            $self->{'account_id'} = $account->account_id;
+        } else {        
+            # Try to create the account
+            if ( $myspace->account_name && $myspace->password ) {
+                $self->set_account(
+                    $myspace->account_name, $myspace->password
+                ) or warn "Couldn't create account: ".$myspace->account_name." / ".
+                     $myspace->password;
+            }
+        }
+        
+        unless ( $self->{'account_id'} ) {
+            croak "This account does not exist and couldn't be created.  ".
+                  "Call set_account to create it.\n";
         }
 
-        $self->{'account_id'} = $account->account_id;
     }
 
     return $self->{'account_id'};
@@ -431,7 +441,7 @@ sub cache_friend {
         if ( $test ) {
             $friend->$col( 'Y' );
         }
-        elsif ( $test == 0 ) {
+        elsif ( ( defined $test ) && ( $test == 0 ) ) {
             $friend->$col( 'N' );
         }
         else {
@@ -1140,21 +1150,13 @@ object directly, use loader()
 
 sub _loader {
 
-    my $options = {
-        RaiseError => 1,
-        AutoCommit => 0,
-    };
-
-    #die Dumper($self);
-
     my $loader = Class::DBI::Loader->new(
         dsn                => $self->{'db'}->{'dsn'},
         user               => $self->{'db'}->{'user'},
         password           => $self->{'db'}->{'password'},
-        options            => $options,
         namespace          => 'WWW::Myspace::Data',
-        relationships      => 1,
-        options            => { AutoCommit => 1 },
+        relationships      => 0,
+        options            => { AutoCommit => 1, RaiseError => 1, },
         inflect            => { child => 'children' },
         additional_classes => qw/Class::DBI::AbstractSearch/,
     );
@@ -1438,9 +1440,9 @@ L<http://lists.digitalcraftsmen.net/pipermail/classdbi/2007-January/001480.html>
 
 =back
 
-Please report any bugs or feature requests to C<bug-www-myspace at
+Please report any bugs or feature requests to C<bug-www-myspace-data at
 rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=WWW-Myspace>. I will be
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=WWW-Myspace-Data>. I will be
 notified, and then you'll automatically be notified of progress on your
 bug as I make changes.
 
@@ -1481,19 +1483,19 @@ You can also look for information at:
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
-L<http://annocpan.org/dist/WWW-Myspace>
+L<http://annocpan.org/dist/WWW-Myspace-Data>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/d/WWW-Myspace>
+L<http://cpanratings.perl.org/d/WWW-Myspace-Data>
 
 =item * RT: CPAN's request tracker
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=WWW-Myspace>
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=WWW-Myspace-Data>
 
 =item * Search CPAN
 
-L<http://search.cpan.org/dist/WWW-Myspace>
+L<http://search.cpan.org/dist/WWW-Myspace-Data>
 
 =back
 

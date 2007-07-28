@@ -1,6 +1,6 @@
 Changes
 MANIFEST
-META.yml # Will be created by "make dist"
+#META.yml # Will be created by "make dist"
 Makefile.PL
 README
 examples/adder.cfg

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More tests => 28;
+use Test::More tests => 29;
 
 use lib 't';
 require_ok( 'WWW::Myspace' );
@@ -51,6 +51,10 @@ SKIP: {
     
     my $data = WWW::Myspace::Data->new($myspace, { db => $config{'db'} } );
     my $loader = $data->loader;
+    
+    my $valid_id = 211075;
+    $data->cache_friend( $valid_id );
+    cmp_ok ( $data->is_private( $valid_id ), '==', 0, "this is not a private account");
     
     #my $friend_id = $myspace->friend_id('vilerichard');
     #ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page: $friend_id");

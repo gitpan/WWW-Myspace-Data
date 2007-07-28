@@ -15,6 +15,14 @@ To install this module, run the following commands:
     make install
 
 
+You will then need to set up your database.  The SQL you need is
+in mysql.txt.  The SQL commands in this file  should work in any
+standard SQL database.
+
+For mysql, you can do this:
+echo "create database friends" | mysql -u root -p 
+mysql -u root -p < mysql.txt
+
 SUPPORT AND DOCUMENTATION
 
 After installing, you can find documentation for this module with the perldoc 

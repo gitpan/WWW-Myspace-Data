@@ -1,5 +1,12 @@
 Revision history for WWW-Myspace-Data
 
+0.14    2007-07-25
+        Removed bug where options were being set twice in _loader.
+        get_account will now create the account if it can't find it
+        instead of croaking.
+        cache_friend no longer displays warning about undefined value
+        in numeric eq (==).
+
 0.13    2007-07-17
         cache_friend now requires friend_id as its sole argument
         cache_friend now caches is_invalid when it is true.  
