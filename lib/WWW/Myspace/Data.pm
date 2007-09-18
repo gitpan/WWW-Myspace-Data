@@ -1,6 +1,7 @@
 package WWW::Myspace::Data;
 
 use WWW::Myspace::MyBase -Base;
+use WWW::Myspace;
 
 use Carp qw(croak cluck);
 use Class::DBI::Loader;
@@ -19,12 +20,21 @@ WWW::Myspace::Data - WWW::Myspace database interaction
 
 =head1 VERSION
 
-Version 0.14
+Version 0.15
 
 =cut
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 my $DEBUG = 0;
+
+BEGIN {
+    my $require = '0.71';
+    # get a minimum version of Myspace.pm to prevent wonkiness
+    if ( $WWW::Myspace::VERSION < $require ) {
+        croak "we need at least version $require  Yours: $WWW::Myspace::VERSION";
+    }
+}
+
 
 =head1 SYNOPSIS
 
@@ -1241,7 +1251,7 @@ sub _find_or_create_friend {
 
 }
 
-=head2 _friends_from_profile( $friend_id )
+=head2 _friends_from_profile( $params_hashref )
 
 Internal method.  Checks db for cached friends.
 
@@ -1390,7 +1400,7 @@ to change.
 
 This module may have varying dependencies, depending on which database server
 you opt to use (MySQL, SQLite etc).  For this reason, you may need to install
-modules additional modules which were included with the default install.  
+modules in addition to those which were included with the default install.
 
 For example, if you are using MySQL, you will need to install the following 
 modules if they are not already on your system:
