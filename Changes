@@ -1,5 +1,18 @@
 Revision history for WWW-Myspace-Data
 
+0.16    2008-01-10
+        Added get_comments method.
+        Updated mysql.txt to include "comments" and "messages" tables.
+        Added get_comments script to 'examples'.
+        Fixed bug which would cause get_comments to return the last comment
+        cached twice.
+        Fixed count of tests in 01-data.t.
+        Updated WWW::Myspace requirement to 0.74.
+        Added get_age method.
+        Added last_login method.
+        Removed redundant setting of last_lookup_id after calls to cache_friend.
+        Added Class::DBI::AbstractSearch to Makefile.PL
+
 0.15	2007-09-18
 		Added minimum requirement for WWW::Myspace.pm of 0.71 since Myspace
 		keeps changing the login form.

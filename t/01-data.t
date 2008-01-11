@@ -1,4 +1,4 @@
-#!perl -T
+#!perl 
 
 use strict;
 use warnings;
@@ -36,7 +36,7 @@ cmp_ok($data->_is_fresh( $dt1, $dt2 ), '==', 1, 'data is fresh');
 cmp_ok($data->_is_fresh( $dt2, $dt1 ), '==', -1, 'data is not fresh');
 
 SKIP: {
-    skip 'no config file for testing', 9 unless -e 't/friend_adder.cfg';
+    skip 'no config file for testing', 10 unless -e 't/friend_adder.cfg';
 
     my %params = (
         config_file => 't/friend_adder.cfg',

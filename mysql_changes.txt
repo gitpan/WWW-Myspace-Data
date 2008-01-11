@@ -32,3 +32,27 @@ The following change is as of Data.pm version 0.12
 
 ALTER TABLE `friends` ADD `is_invalid` CHAR( 1 ) NULL DEFAULT NULL AFTER `is_band` ,
 ADD `is_private` CHAR( 1 ) NULL DEFAULT NULL AFTER `is_invalid` ;
+
+/*
+The following change is as of Data.pm version 0.13
+*/
+
+CREATE TABLE messages (
+  message_id int(11),
+  account_id int(11),
+  `date` date,
+  sender_id int(11),
+  status varchar(10),
+  subject varchar(255),
+  message text,
+  PRIMARY KEY (message_id)
+);
+
+CREATE TABLE comments (
+  comment_id int(11) NOT NULL auto_increment,
+  friend_id int(11),
+  `time` datetime,
+  sender_id int(11),
+  comment text,
+  PRIMARY KEY (comment_id)
+);

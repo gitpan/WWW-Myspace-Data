@@ -4,15 +4,16 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => 'WWW::Myspace::Data',
-    AUTHOR              => 'Olaf Alders <olaf#wundersolutions.com>',
+    AUTHOR              => 'Olaf Alders <olaf@wundersolutions.com>',
     VERSION_FROM        => 'lib/WWW/Myspace/Data.pm',
     ABSTRACT_FROM       => 'lib/WWW/Myspace/Data.pm',
     PL_FILES            => {},
     PREREQ_PM => {
-        'WWW::Myspace'              => 0.67,
+        'WWW::Myspace'              => 0.74,
         'Test::More'                => 0,
         'Carp'                      => 0, 
         'Class::DBI'                => 0,
+        'Class::DBI::AbstractSearch' => 0,
         'Class::DBI::Loader'        => 0,
         'Config::General'           => 0,
         'Data::Dumper'              => 0,

@@ -144,3 +144,35 @@ CREATE TABLE tracking (
   profile_views int(11) default NULL,
   PRIMARY KEY  (tracking_id)
 );
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `messages`
+-- 
+
+CREATE TABLE messages (
+  message_id int(11),
+  account_id int(11),
+  `date` date,
+  sender_id int(11),
+  status varchar(10),
+  subject varchar(255),
+  message text,
+  PRIMARY KEY (message_id)
+);
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `comments`
+-- 
+
+CREATE TABLE comments (
+  comment_id int(11) NOT NULL auto_increment,
+  friend_id int(11),
+  `time` datetime,
+  sender_id int(11),
+  comment text,
+  PRIMARY KEY (comment_id)
+);

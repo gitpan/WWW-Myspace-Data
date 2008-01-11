@@ -20,15 +20,15 @@ WWW::Myspace::Data - WWW::Myspace database interaction
 
 =head1 VERSION
 
-Version 0.15
+Version 0.16
 
 =cut
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 my $DEBUG = 0;
 
 BEGIN {
-    my $require = '0.71';
+    my $require = '0.74';
     # get a minimum version of Myspace.pm to prevent wonkiness
     if ( $WWW::Myspace::VERSION < $require ) {
         croak "we need at least version $require  Yours: $WWW::Myspace::VERSION";
@@ -457,8 +457,8 @@ sub cache_friend {
         else {
             $friend->$col( undef );
         }
-    }            
-
+    }
+    
     $friend->last_update( $self->date_stamp );
     return $friend->update;
 
@@ -735,7 +735,7 @@ sub is_band {
     }
     else {
         $self->cache_friend($friend_id);
-        $self->{'last_lookup_id'} = $friend_id;
+#        $self->{'last_lookup_id'} = $friend_id;
         return $self->is_band_from_cache($friend_id);
     }
 
@@ -837,6 +837,75 @@ sub is_private {
 
     }
 
+    return;
+
+}
+
+=head2 get_age( $friend_id )
+
+Checks the database to get the age of the friend, if it's cached there.
+Otherwise, returns null.
+
+=cut
+
+sub get_age {
+
+    my $friend_id = shift;
+
+    my $friend = $self->{'Friends'}->retrieve( friend_id => $friend_id );
+
+    if ($friend) {
+
+        if ( $friend->age ) {
+            return $friend->age
+        }
+        else {
+            # if it's a NULL value, a proper lookup is needed
+            $self->cache_friend($friend_id);
+            return $friend->age;
+        }
+
+    }
+
+    return;
+
+}
+
+
+=head2 last_login( $friend_id )
+
+Checks the database to get the last login time of the friend, if it's cached there.
+Otherwise, returns null.
+
+=cut
+
+sub last_login {
+
+    my $friend_id = shift;
+
+    unless ( $friend_id ) { $friend_id = $self->{'last_friend_id'} }
+
+    croak "WWW::Myspace::Data->last_login called without friend_id when no previous ".
+         "friend_id exists." unless $friend_id;
+
+    my $friend = $self->{'Friends'}->retrieve( friend_id => $friend_id );
+    $self->{'last_friend_id'} = $friend_id;
+
+    # If the friend isn't cached or there's no last_login value stored, go
+    # retrieve the data
+    unless ( $friend && $friend->last_login ) {
+
+        $self->cache_friend($friend_id);
+
+    }
+
+    if ( $friend->last_login ) {
+        # last_login deals in "time" format, database stores in YMD, so convert and
+        # return.
+        return DateTime::Format::MySQL->parse_date( $friend->last_login )->epoch
+     }
+
+    # If we don't have a value, return nothing.
     return;
 
 }
@@ -1081,6 +1150,92 @@ sub post_comment {
         
     return $status;
     
+}
+
+=head2 get_comments( friend_id => $friend_id )
+
+A wrapper around WWW::Myspace->get_comments().  Calls this method and
+caches the results.  This method is efficient and only retrieves
+comments not cached previously.
+
+=cut
+
+sub get_comments {
+
+    my ( %options ) = @_;
+    my $friend_id = ( $options{'friend_id'} || $self->{'myspace'}->my_friend_id );
+
+    # Get any cached comments
+    my ( $latest_comment_time, $cached_comments ) = $self->_get_cached_comments(
+        'friend_id' => $friend_id );
+
+    # Get any comments new since the last cache and insert them into the DB
+    # TODO:  See if we can store and use get_comment's comment_id value instead
+    # of lastest_comment_time here and below.
+    my $new_comments = $self->{'myspace'}->get_comments(
+            'friend_id' => $friend_id, last_comment_time => $latest_comment_time+1
+        ) or return;
+    my $account_id = $self->get_account();
+    
+    foreach my $c ( @$new_comments ) {
+        ( $DEBUG ) && print "New comment: " . Dumper( $c ) . "\n\n";
+        my $mysqltime = DateTime->from_epoch(
+            'epoch' => $c->{'time'},
+            time_zone => 'local'
+        )->datetime;
+        $mysqltime =~ s/T/ /;  #datetime is "2007-10-27T21:22:00". MySQL uses a space instead of T.
+        # We could have an overlapping comment.  Since there's no reliable unique ID
+        # for comments, we do this.
+        # TODO: See if we can use the comment_id value returned by get_comments in
+        # WWW::Myspace 0.73 for this.
+        my $comment = $self->{'Comments'}->find_or_create( {
+            friend_id => $friend_id,
+            sender_id => $c->{'sender'},
+            'time' => $mysqltime,
+            comment => $c->{'comment'}
+        } );
+        
+#         my $insert = WWW::Myspace::Data::Comments->insert( {
+#             friend_id => $friend_id,
+#             sender_id => $c->{'sender'},
+#             'time' => $mysqltime,
+#             comment => $c->{'comment'}
+#         } );
+    }
+
+    # Return the new comments followed by the cached comments (myspace lists newest first)
+    return ( @$new_comments, @$cached_comments );
+}
+
+sub _get_cached_comments {
+
+    my ( %options ) = ( @_ );
+    my $friend_id = $options{'friend_id'};
+    my @comments;
+
+    my $iterator =
+      $self->{'Comments'}
+      ->search_where( { friend_id => $friend_id },
+        { order_by => 'time desc', limit_dialect => $self->{'Comments'} } );
+
+    my $most_recent_comment_time = 0;
+    while ( my $comment = $iterator->next ) {
+
+        my $c = { sender_id => $comment->sender_id, 'time' => $comment->time(),
+                comment=>$comment->comment };
+
+        my $dt = DateTime::Format::MySQL->parse_datetime( $c->{'time'} );
+        $dt->set_time_zone('local');
+        $c->{'time'} = $dt->epoch;
+        push( @comments, $c );
+
+        if ( $c->{'time'} > $most_recent_comment_time ) {
+            $most_recent_comment_time = $c->{'time'}
+        }
+
+    }
+
+    return ( $most_recent_comment_time, \@comments )
 }
 
 =head2 send_message( %options )
@@ -1516,7 +1671,7 @@ his help and advice in the development of this module.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2006-2007 Olaf Alders, all rights reserved.
+Copyright 2006-2008 Olaf Alders, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,0 +1,69 @@
+#!/usr/bin/perl -w -I../lib
+######################################################################
+# get_comments
+# Sccsid:  %Z%  %M%  %I%  Delta: %G%
+# $Id: $
+######################################################################
+# Copyright (c) #LOCALTIME %Y# Grant Grueninger, Commercial Systems Corp.
+#
+# Description:
+# usage: get_comments sender_id
+# Prints all comments left for the logged-in account by sender_id
+# where sender_id is the friend ID of a myspace account.
+# Example:
+#
+# get_comments 12345
+
+#---------------------------------------------------------------------
+# Setup Variables
+
+# Database connection info.
+my %db = (
+   dsn      => 'dbi:mysql:friends',
+   user     => '',
+   password => '',
+);
+
+# Debugging?
+#$DEBUG=0;
+
+#---------------------------------------------------------------------
+# Libraries
+
+use WWW::Myspace;
+use WWW::Myspace::Data;
+use Data::Dumper;
+
+######################################################################
+# Main Program
+
+my $sender = shift( @ARGV );
+my $myspace = new WWW::Myspace;
+
+#  create a new object
+warn "Getting data object...\n";
+my $data = WWW::Myspace::Data->new( $myspace, { db => \%db } );
+
+# set up a database connection
+warn "Getting loader object...\n";
+my $loader     = $data->loader();
+
+# initialize the database with Myspace login info
+warn "Initializing database account information for " .
+    $data->{'myspace'}->account_name . "...\n";
+my $account_id = $data->get_account;
+
+# now do something useful...
+warn "Getting comments from sender $sender...\n";
+my @comments = $data->get_comments( @ARGV );
+
+foreach my $comment ( @comments ) {
+    if ( $comment->{'sender_id'} == $sender ) {
+        print Dumper( $comment )
+    }
+}
+
+
+######################################################################
+# Subroutines
+
