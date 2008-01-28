@@ -20,15 +20,15 @@ WWW::Myspace::Data - WWW::Myspace database interaction
 
 =head1 VERSION
 
-Version 0.16
+Version 0.17
 
 =cut
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 my $DEBUG = 0;
 
 BEGIN {
-    my $require = '0.74';
+    my $require = '0.75';
     # get a minimum version of Myspace.pm to prevent wonkiness
     if ( $WWW::Myspace::VERSION < $require ) {
         croak "we need at least version $require  Yours: $WWW::Myspace::VERSION";

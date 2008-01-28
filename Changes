@@ -1,5 +1,8 @@
 Revision history for WWW-Myspace-Data
 
+0.17    2008-01-15
+        Updated WWW::Myspace version requirements.
+
 0.16    2008-01-10
         Added get_comments method.
         Updated mysql.txt to include "comments" and "messages" tables.

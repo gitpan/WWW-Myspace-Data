@@ -9,7 +9,7 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/WWW/Myspace/Data.pm',
     PL_FILES            => {},
     PREREQ_PM => {
-        'WWW::Myspace'              => 0.74,
+        'WWW::Myspace'              => 0.75,
         'Test::More'                => 0,
         'Carp'                      => 0, 
         'Class::DBI'                => 0,
