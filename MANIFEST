@@ -2,11 +2,15 @@ Changes
 MANIFEST
 Makefile.PL
 README
+mysql.txt
+mysql_changes.txt
 examples/adder.cfg
 examples/friend_adder.pl
+examples/get_comments
 lib/WWW/Myspace/Data.pm
 t/00-load.t
 t/01-data.t
 t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
+META.yml                                 Module meta-data (added by MakeMaker)

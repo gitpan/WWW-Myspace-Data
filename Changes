@@ -1,5 +1,12 @@
 Revision history for WWW-Myspace-Data
 
+0.18    2008-10-26
+        Updated WWW::Myspace version requirements.
+        Added Class::DBI::Loader minimum version to fix bug where
+        class names could not be found.
+        Added files to MANIFEST which had previously been missing from it
+        Added Perl license to Makefile.PL
+
 0.17    2008-01-15
         Updated WWW::Myspace version requirements.
 

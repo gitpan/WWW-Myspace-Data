@@ -59,7 +59,7 @@ SKIP: {
     #my $friend_id = $myspace->friend_id('vilerichard');
     #ok( $data->cache_friend( page => $myspace->current_page), "cached friend from page: $friend_id");
 
-    my $friend_url = 'montgomerygentry';
+    my $friend_url = 'vilerichard';
     my $friend_id = $myspace->friend_id( $friend_url ) || die $myspace->error;
     
     ok( $friend_id, "got friend_id");
